@@ -1,6 +1,8 @@
 @tool
 class_name DialogicWaitEvent
 extends DialogicEvent
+#var wait_interrupted: bool = false
+#var timer:Timer
 
 ## Event that waits for some time before continuing.
 
@@ -12,6 +14,11 @@ var time: float = 1.0
 ## If true the text box will be hidden while the event waits.
 var hide_text: bool = true
 
+func _wait_interrupter(timer):
+	#printerr("wait interrupter triggered.  wait intrrupted now true")
+	#wait_interrupted = true
+	printerr("_wait_interrupter timer== ", timer)
+	_finish_wait(timer)
 
 ################################################################################
 ## 						EXECUTE
@@ -28,9 +35,40 @@ func _execute() -> void:
 		dialogic.Text.update_dialog_text('')
 		dialogic.Text.hide_textbox()
 	dialogic.current_state = dialogic.States.WAITING
-	await dialogic.get_tree().create_timer(time, false, DialogicUtil.is_physics_timer()).timeout
+	#print("timer b4== ", timer)
+	var timer = Timer.new()
+	timer.autostart = true
+	timer.one_shot = true
+	timer.wait_time = final_wait_time
+	var game_node = GM.get_node("Game")
+	game_node.add_child(timer)
+	var connect = GM.connect("skip_movie", _finish_wait.bind(timer))
+	print("timer is: ", timer)
+	#print("is connected: ", GM.is_connected("skip_movie", _wait_interrupter))
+	#timer.connect("timeout", _finish_wait)
+	await timer.timeout
+	#timer = await dialogic.get_tree().create_timer(time, true, DialogicUtil.is_physics_timer()).timeout
+	#print("timer after == ", timer)
+	if GM.is_connected("skip_movie", _finish_wait):
+		print("GM is connected...")
+		print("timer== ", timer)
+		
+	else: 
+		print("not connected")
+		
+	_finish_wait(timer)
+	#if wait_interrupted == false:
+		#_finish_wait()
+	#else:
+		#wait_interrupted = false
+	
+func _finish_wait(timer):
+	printerr("_finish_wait timer== ", timer)
+	if is_instance_valid(timer):
+		timer.queue_free()
+		printerr("timer is queue_freed")
+	#wait_interrupted = true
 	dialogic.current_state = dialogic.States.IDLE
-
 	finish()
 
 
