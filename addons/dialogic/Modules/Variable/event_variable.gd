@@ -95,7 +95,8 @@ func _execute() -> void:
 				return
 
 			if operation == Operations.SET:
-				result = interpreted_value
+				if typeof(interpreted_value) == 3: #HACK type chk for float
+					result = interpreted_value
 
 			else:
 				original_value = float(original_value)
