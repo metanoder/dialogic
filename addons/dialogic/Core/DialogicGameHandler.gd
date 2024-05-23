@@ -154,10 +154,6 @@ var Voice := preload("res://addons/dialogic/Modules/Voice/subsystem_voice.gd").n
 
 ## Autoloads are added first, so this happens REALLY early on game startup.
 func _ready() -> void:
-	# Check if this is the first autoload singleton, if not, move it to 0
-	printerr("index== ", get_index())
-	if get_index() != 0:
-		get_tree().move_child(self, 0)
 		
 	DialogicResourceUtil.update()
 
