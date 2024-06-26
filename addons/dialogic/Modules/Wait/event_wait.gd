@@ -31,10 +31,11 @@ func _execute() -> void:
 		var time_per_event: float = dialogic.Inputs.auto_skip.time_per_event
 		final_wait_time = min(time, time_per_event)
 
-	if hide_text and dialogic.has_subsystem("Text"):
-		dialogic.Text.update_dialog_text('')
-		dialogic.Text.hide_textbox()
 	dialogic.current_state = dialogic.States.WAITING
+
+	if hide_text and dialogic.has_subsystem("Text"):
+		dialogic.Text.update_dialog_text('', true)
+		dialogic.Text.hide_textbox()
 	#print("timer b4== ", timer)
 	var timer = Timer.new()
 	timer.autostart = true
@@ -47,6 +48,8 @@ func _execute() -> void:
 	#print("is connected: ", GM.is_connected("skip_movie", _wait_interrupter))
 	#timer.connect("timeout", _finish_wait)
 	await timer.timeout
+	if dialogic.Animations.is_animating():
+		dialogic.Animations.stop_animation()
 	#timer = await dialogic.get_tree().create_timer(time, true, DialogicUtil.is_physics_timer()).timeout
 	#print("timer after == ", timer)
 	if GM.is_connected("skip_movie", _finish_wait):
