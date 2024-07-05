@@ -20,7 +20,7 @@ var _auto_skip_timer_left: float = 0.0
 var action_was_consumed := false
 
 var auto_skip: DialogicAutoSkip = null
-var auto_advance : DialogicAutoAdvance = null
+var auto_advance: DialogicAutoAdvance = null
 var manual_advance: DialogicManualAdvance = null
 
 
@@ -93,7 +93,7 @@ func handle_input() -> void:
 ## Unhandled Input is used for all NON-Mouse based inputs.
 func _unhandled_input(event:InputEvent) -> void:
 	if is_input_pressed(event, true):
-		if event is InputEventMouse:
+		if event is InputEventMouse or event is InputEventScreenTouch:
 			return
 		handle_input()
 
@@ -126,7 +126,7 @@ func is_input_blocked() -> bool:
 
 func block_input(time:=0.1) -> void:
 	if time > 0:
-		input_block_timer.wait_time = time
+		input_block_timer.wait_time = max(time, input_block_timer.time_left)
 		input_block_timer.start()
 
 
