@@ -1,6 +1,8 @@
 @tool
 class_name DialogicWaitEvent
 extends DialogicEvent
+#var wait_interrupted: bool = false
+#var timer:Timer
 
 ## Event that waits for some time before continuing.
 
@@ -12,6 +14,11 @@ var time: float = 1.0
 ## If true the text box will be hidden while the event waits.
 var hide_text := true
 
+func _wait_interrupter(timer):
+	#printerr("wait interrupter triggered.  wait intrrupted now true")
+	#wait_interrupted = true
+	printerr("_wait_interrupter timer== ", timer)
+	_finish_wait(timer)
 
 ################################################################################
 ## 						EXECUTE
@@ -26,15 +33,56 @@ func _execute() -> void:
 
 	dialogic.current_state = dialogic.States.WAITING
 
+
 	if hide_text and dialogic.has_subsystem("Text"):
 		dialogic.Text.update_dialog_text('', true)
 		dialogic.Text.hide_textbox()
 
-	await dialogic.get_tree().create_timer(final_wait_time, false, DialogicUtil.is_physics_timer()).timeout
+	#upstream merged...
+	#await dialogic.get_tree().create_timer(final_wait_time, false, DialogicUtil.is_physics_timer()).timeout
+	#upstream end
+	
+	#print("timer b4== ", timer)
+	var timer = Timer.new()
+	timer.autostart = true
+	timer.one_shot = true
+	timer.wait_time = final_wait_time
+	var game_node = GM.get_node("Game")
+	game_node.add_child(timer)
+	var connect = GM.connect("skip_movie", _finish_wait.bind(timer))
+	print("timer is: ", timer)
+	#print("is connected: ", GM.is_connected("skip_movie", _wait_interrupter))
+	#timer.connect("timeout", _finish_wait)
+	await timer.timeout
+	#timer = await dialogic.get_tree().create_timer(time, true, DialogicUtil.is_physics_timer()).timeout
+	#print("timer after == ", timer)
+
+	#upstream merged...
 	if dialogic.Animations.is_animating():
 		dialogic.Animations.stop_animation()
-	dialogic.current_state = dialogic.States.IDLE
+	#upstream end
+	
+	if GM.is_connected("skip_movie", _finish_wait):
+		print("GM is connected...")
+		print("timer== ", timer)
+		
+	else: 
+		print("not connected")
+		
+	_finish_wait(timer)
+	#if wait_interrupted == false:
+		#_finish_wait()
+	#else:
+		#wait_interrupted = false
+	
+func _finish_wait(timer):
+	printerr("_finish_wait timer== ", timer)
+	if is_instance_valid(timer):
+		timer.queue_free()
+		printerr("timer is queue_freed")
+	#wait_interrupted = true
 
+	dialogic.current_state = dialogic.States.IDLE
 	finish()
 
 

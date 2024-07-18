@@ -154,6 +154,11 @@ var Voice := preload("res://addons/dialogic/Modules/Voice/subsystem_voice.gd").n
 
 ## Autoloads are added first, so this happens REALLY early on game startup.
 func _ready() -> void:
+	# Check if this is the first autoload singleton, if not, move it to 0
+	printerr("index== ", get_index())
+	if get_index() != 0:
+		get_tree().move_child(self, 0)
+		
 	DialogicResourceUtil.update()
 
 	_collect_subsystems()
@@ -359,6 +364,40 @@ func load_full_state(state_info:Dictionary) -> void:
 		end_timeline.call_deferred()
 #endregion
 
+## This method tries to load the state from the given [param state_info].
+## Will automatically start a timeline and add a layout if a timeline was running when
+## the dictionary was retrieved with [method get_full_state].
+func load_full_state_alt(state_info:Dictionary) -> Node:
+	#clear()
+	current_state_info = state_info
+	## The Style subsystem needs to run first for others to load correctly.
+	var scene: Node = null
+	if has_subsystem('Styles'):
+		get_subsystem('Styles').load_game_state()
+		scene = self.Styles.get_layout_node()
+
+	var load_subsystems := func() -> void:
+		for subsystem in get_children():
+			if subsystem.name == 'Styles':
+				continue
+			(subsystem as DialogicSubsystem).load_game_state()
+
+	if null != scene and not scene.is_node_ready():
+		scene.ready.connect(load_subsystems)
+	else:
+		await get_tree().process_frame
+		load_subsystems.call()
+
+	if current_state_info.get('current_timeline', null):
+		#printerr("current_state_info, current event idx== ",current_state_info.get('current_event_idx', 0))
+		current_event_idx = current_state_info.get('current_event_idx', 0)
+		start_timeline(current_state_info.current_timeline, current_state_info.get('current_event_idx', 0))
+	else:
+		#printerr("end timeline call_deferred")
+		end_timeline.call_deferred()
+		
+	return scene
+#endregion
 
 #region SUB-SYTSEMS
 ################################################################################
