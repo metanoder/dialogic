@@ -33,9 +33,17 @@ func _execute() -> void:
 
 	dialogic.current_state = dialogic.States.WAITING
 
+
 	if hide_text and dialogic.has_subsystem("Text"):
 		dialogic.Text.update_dialog_text('', true)
 		dialogic.Text.hide_textbox()
+
+
+	#upstream merged...
+	#await dialogic.get_tree().create_timer(final_wait_time, false, DialogicUtil.is_physics_timer()).timeout
+	#upstream end
+	
+
 	#print("timer b4== ", timer)
 	var timer = Timer.new()
 	timer.autostart = true
@@ -48,10 +56,16 @@ func _execute() -> void:
 	#print("is connected: ", GM.is_connected("skip_movie", _wait_interrupter))
 	#timer.connect("timeout", _finish_wait)
 	await timer.timeout
-	if dialogic.Animations.is_animating():
-		dialogic.Animations.stop_animation()
+
 	#timer = await dialogic.get_tree().create_timer(time, true, DialogicUtil.is_physics_timer()).timeout
 	#print("timer after == ", timer)
+
+	#upstream merged...
+	if dialogic.Animations.is_animating():
+		dialogic.Animations.stop_animation()
+	#upstream end
+	
+
 	if GM.is_connected("skip_movie", _finish_wait):
 		print("GM is connected...")
 		print("timer== ", timer)
@@ -71,6 +85,7 @@ func _finish_wait(timer):
 		timer.queue_free()
 		printerr("timer is queue_freed")
 	#wait_interrupted = true
+
 	dialogic.current_state = dialogic.States.IDLE
 	finish()
 
